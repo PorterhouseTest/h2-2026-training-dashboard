@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: dark;
+}
+
+body {
+  min-height: 100vh;
+  background: #101113;
+  color: #e4e4e7;
+}
+
+input,
+select,
+textarea,
+button {
+  font: inherit;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th,
+td {
+  border-bottom: 1px solid #2b3038;
+  padding: 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  color: #a1a1aa;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
