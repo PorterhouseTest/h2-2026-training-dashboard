@@ -1,0 +1,231 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum BjjStyle {
+  Gi
+  NoGi
+  MMA
+  OpenMat
+  Other
+}
+
+enum BjjRole {
+  Taught
+  Trained
+  Rolled
+  Competed
+  Other
+}
+
+enum RaceConfidence {
+  Low
+  Medium
+  High
+}
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  accounts      Account[]
+  sessions      Session[]
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+model TrainingPlan {
+  id             String           @id @default(cuid())
+  name           String
+  raceDate       DateTime
+  sourceFileName String
+  workouts       PlannedWorkout[]
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+}
+
+model PlannedWorkout {
+  id                     String          @id @default(cuid())
+  trainingPlanId         String
+  trainingPlan           TrainingPlan    @relation(fields: [trainingPlanId], references: [id], onDelete: Cascade)
+  date                   DateTime
+  weekStartDate          DateTime
+  dayOfWeek              String
+  workoutText            String
+  workoutType            String
+  plannedDistanceMiles   Float?
+  plannedDurationMinutes Int?
+  intensityLabel         String?
+  isRaceDay              Boolean         @default(false)
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+
+  @@unique([trainingPlanId, date])
+  @@index([date])
+  @@index([weekStartDate])
+}
+
+model GarminActivity {
+  id                         String   @id @default(cuid())
+  garminActivityId           String   @unique
+  activityDate               DateTime
+  activityType               String
+  activityName               String
+  durationSeconds            Int?
+  distanceMiles              Float?
+  averagePaceSecondsPerMile  Int?
+  averageHeartRate           Int?
+  maxHeartRate               Int?
+  elevationGainFeet          Float?
+  calories                   Int?
+  rawJson                    Json
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  @@index([activityDate])
+}
+
+model DailyHealthMetric {
+  id                String   @id @default(cuid())
+  date              DateTime @unique
+  restingHeartRate  Int?
+  hrv               Float?
+  sleepSeconds      Int?
+  sleepScore        Float?
+  bodyBattery       Int?
+  stressScore       Float?
+  trainingReadiness Float?
+  rawJson           Json
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+}
+
+model BjjSession {
+  id           String   @id @default(cuid())
+  date         DateTime
+  style        BjjStyle
+  role         BjjRole
+  intensity    Int?
+  roundsRolled Int?
+  hardRounds   Int?
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([date])
+}
+
+model StrengthSession {
+  id          String             @id @default(cuid())
+  date        DateTime
+  workoutName String?
+  notes       String?
+  exercises   StrengthExercise[]
+  createdAt   DateTime           @default(now())
+  updatedAt   DateTime           @updatedAt
+
+  @@index([date])
+}
+
+model StrengthExercise {
+  id                String          @id @default(cuid())
+  strengthSessionId String
+  strengthSession   StrengthSession @relation(fields: [strengthSessionId], references: [id], onDelete: Cascade)
+  exerciseName       String
+  sets               Int?
+  reps               Int?
+  weight             Float?
+  rpe                Float?
+  painNotes          String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
+}
+
+model WeeklyWeight {
+  id            String   @id @default(cuid())
+  weekStartDate DateTime @unique
+  dateLogged    DateTime
+  weight        Float
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model DailyNote {
+  id        String   @id @default(cuid())
+  date      DateTime
+  note      String
+  tag       String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([date])
+}
+
+model RacePrediction {
+  id                              String         @id @default(cuid())
+  date                            DateTime
+  predictedMarathonTimeSeconds    Int?
+  predictedHalfMarathonTimeSeconds Int?
+  predicted10kTimeSeconds         Int?
+  predicted5kTimeSeconds          Int?
+  confidence                      RaceConfidence
+  explanation                     String
+  createdAt                       DateTime       @default(now())
+  updatedAt                       DateTime       @updatedAt
+
+  @@index([date])
+}
+
+model SyncLog {
+  id         String    @id @default(cuid())
+  source     String
+  status     String
+  startedAt  DateTime
+  finishedAt DateTime?
+  message    String?
+  createdAt  DateTime  @default(now())
+
+  @@index([source, startedAt])
+}
